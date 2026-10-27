@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RAMCO Relay Watcher</title>
+<style>
+body{margin:0;background:#070707;color:#f5f5f5;font-family:Arial,sans-serif}
+.wrap{max-width:1000px;margin:auto;padding:18px}
+.top{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:20px;margin:0}
+.red{color:#ff3b3b;font-weight:bold}
+.status{background:#151515;padding:10px 14px;border-radius:20px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+.card{background:#151515;border:1px solid #292929;border-radius:14px;padding:15px}
+.label{color:#888;font-size:11px;text-transform:uppercase}
+.value{font-size:26px;font-weight:bold;margin-top:7px}
+h2{font-size:13px;margin-top:20px;color:#bbb}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #222}
+.ok{color:#32d583;font-weight:bold}
+.bad{color:#ff6262;font-weight:bold}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+<div>
+<h1>RAMCO TRUCKING INC.</h1>
+<div class="red">RELAY WATCHER</div>
+</div>
+<div class="status" id="status">OFFLINE</div>
+</div>
+
+<div class="grid">
+<div class="card"><div class="label">Booked</div><div class="value" id="booked">0</div></div>
+<div class="card"><div class="label">Failed</div><div class="value" id="failed">0</div></div>
+<div class="card"><div class="label">Success Rate</div><div class="value" id="rate">0%</div></div>
+<div class="card"><div class="label">Uptime</div><div class="value" id="uptime">—</div></div>
+</div>
+
+<h2>BOOKING SPEED</h2>
+
+<div class="grid">
+<div class="card"><div class="label">Card → Book</div><div class="value" id="ctb">—</div></div>
+<div class="card"><div class="label">Book → Confirm</div><div class="value" id="btc">—</div></div>
+<div class="card"><div class="label">Average Total</div><div class="value" id="avg">—</div></div>
+<div class="card"><div class="label">Fastest</div><div class="value" id="fast">—</div></div>
+</div>
+
+<h2>RECENT ACTIVITY</h2>
+
+<div class="card" style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>Result</th>
+<th>Lane</th>
+<th>Miles</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody id="rows">
+<tr><td colspan="5">No telemetry yet.</td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+const API="https://djfydnjmhinijgbwzypw.supabase.co/functions/v1/relay-data-4f10e7c3b2a9";
+
+function ms(v){
+ if(v==null)return "—";
+ return v<1000?v+" ms":(v/1000).toFixed(2)+" s";
+}
+
+function uptime(v){
+ if(v==null)return "—";
+ const s=Math.floor(v/1000);
+ const h=Math.floor(s/3600);
+ const m=Math.floor((s%3600)/60);
+ return h?h+"h "+m+"m":m+"m";
+}
+
+async function load(){
+ try{
+  const r=await fetch(API+"?t="+Date.now());
+  const d=await r.json();
+  const s=d.stats;
+
+  status.textContent=s.online?"RUNNING":"OFFLINE";
+  status.style.color=s.online?"#32d583":"#ff6262";
+
+  booked.textContent=s.booked;
+  failed.textContent=s.failed;
+  rate.textContent=s.success_rate+"%";
+  uptime.textContent=window.uptime(s.uptime_ms);
+
+  ctb.textContent=ms(s.avg_card_to_book_ms);
+  btc.textContent=ms(s.avg_book_to_confirm_ms);
+  avg.textContent=ms(s.avg_total_ms);
+  fast.textContent=ms(s.fastest_total_ms);
+
+  const events=d.events.filter(x =>
+    x.event_type==="booking_success" ||
+    x.event_type==="booking_failed"
+  ).slice(0,50);
+
+  rows.innerHTML=events.length ? events.map(x=>{
+   const good=x.event_type==="booking_success";
+   return `<tr>
+   <td>${new Date(x.created_at).toLocaleTimeString()}</td>
+   <td class="${good?"ok":"bad"}">${good?"BOOKED":"FAILED"}</td>
+   <td>${x.origin||"—"} → ${x.destination||"—"}</td>
+   <td>${x.miles??"—"}</td>
+   <td>${ms(x.total_ms)}</td>
+   </tr>`;
+  }).join("") :
+  '<tr><td colspan="5">No telemetry yet.</td></tr>';
+
+ }catch(e){
+  status.textContent="ERROR";
+  status.style.color="#ff6262";
+ }
+}
+
+load();
+setInterval(load,10000);
+</script>
+</body>
+</html>
