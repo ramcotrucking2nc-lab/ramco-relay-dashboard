@@ -324,8 +324,19 @@ async function load(){
     el.status.style.color="#ff6262";
   }
 }
-load();
-setInterval(load,10000);
+let busy = false;
+async function refreshLive() {
+  if (busy || document.hidden) return;
+  busy = true;
+  try { await load(); }
+  finally { busy = false; }
+}
+refreshLive();
+setInterval(refreshLive, 2000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshLive();
+});
+window.addEventListener("focus", refreshLive);
 </script>
 </body>
 </html>
