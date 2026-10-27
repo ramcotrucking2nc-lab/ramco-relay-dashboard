@@ -175,6 +175,26 @@ th{color:#8f8f8f;font-size:10px;text-transform:uppercase}
 <script>
 const API="https://djfydnjmhinijgbwzypw.supabase.co/functions/v1/relay-data-4f10e7c3b2a9";
 
+const el = {
+  status: document.getElementById("status"),
+  booked: document.getElementById("booked"),
+  failed: document.getElementById("failed"),
+  rate: document.getElementById("rate"),
+  gross: document.getElementById("gross"),
+  ctb: document.getElementById("ctb"),
+  btc: document.getElementById("btc"),
+  avg: document.getElementById("avg"),
+  fast: document.getElementById("fast"),
+  device: document.getElementById("device"),
+  refresh: document.getElementById("refresh"),
+  uptime: document.getElementById("uptime"),
+  heartbeat: document.getElementById("heartbeat"),
+  rows: document.getElementById("rows"),
+  laneRows: document.getElementById("laneRows"),
+  dailyRows: document.getElementById("dailyRows"),
+  hourBars: document.getElementById("hourBars")
+};
+
 function ms(v){
   if(v==null)return "—";
   return v<1000 ? `${Math.round(v)} ms` : `${(v/1000).toFixed(2)} s`;
@@ -197,26 +217,27 @@ function estimateRate(e){
 async function load(){
   try{
     const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error("API HTTP "+r.status);
     const d=await r.json();
     const s=d.stats||{};
     const events=Array.isArray(d.events)?d.events:[];
 
-    status.textContent=s.online?"RUNNING":"OFFLINE";
-    status.style.color=s.online?"#22c55e":"#ff6262";
+    el.status.textContent=s.online?"RUNNING":"OFFLINE";
+    el.status.style.color=s.online?"#22c55e":"#ff6262";
 
-    booked.textContent=s.booked??0;
-    failed.textContent=s.failed??0;
-    rate.textContent=(s.success_rate??0)+"%";
-    ctb.textContent=ms(s.avg_card_to_book_ms);
-    btc.textContent=ms(s.avg_book_to_confirm_ms);
-    avg.textContent=ms(s.avg_total_ms);
-    fast.textContent=ms(s.fastest_total_ms);
-    device.textContent=s.device_id||"—";
-    refresh.textContent=s.refresh_rate!=null?s.refresh_rate+" / sec":"—";
-    uptime.textContent=uptimeFmt(s.uptime_ms);
+    el.booked.textContent=s.booked??0;
+    el.failed.textContent=s.failed??0;
+    el.rate.textContent=(s.success_rate??0)+"%";
+    el.ctb.textContent=ms(s.avg_card_to_book_ms);
+    el.btc.textContent=ms(s.avg_book_to_confirm_ms);
+    el.avg.textContent=ms(s.avg_total_ms);
+    el.fast.textContent=ms(s.fastest_total_ms);
+    el.device.textContent=s.device_id||"—";
+    el.refresh.textContent=s.refresh_rate!=null?s.refresh_rate+" / sec":"—";
+    el.uptime.textContent=uptimeFmt(s.uptime_ms);
 
     const latest=events[0];
-    heartbeat.textContent=latest?new Date(latest.created_at).toLocaleTimeString():"—";
+    el.heartbeat.textContent=latest?new Date(latest.created_at).toLocaleTimeString():"—";
 
     const bookingEvents=events.filter(e =>
       e.event_type==="booking_success" ||
@@ -225,10 +246,10 @@ async function load(){
 
     const todayKey=new Date().toLocaleDateString();
     const today=bookingEvents.filter(e=>new Date(e.created_at).toLocaleDateString()===todayKey);
-    gross.textContent=money(today.filter(e=>e.event_type==="booking_success")
+    el.gross.textContent=money(today.filter(e=>e.event_type==="booking_success")
       .reduce((a,e)=>a+estimateRate(e),0));
 
-    rows.innerHTML=bookingEvents.length?bookingEvents.slice(0,50).map(e=>{
+    el.rows.innerHTML=bookingEvents.length?bookingEvents.slice(0,50).map(e=>{
       const good=e.event_type==="booking_success";
       return `<tr>
         <td>${new Date(e.created_at).toLocaleString()}</td>
@@ -253,7 +274,7 @@ async function load(){
       if(e.total_ms!=null){x.total+=e.total_ms;x.samples++}
     });
 
-    laneRows.innerHTML=Object.entries(laneMap).length
+    el.laneRows.innerHTML=Object.entries(laneMap).length
       ? Object.entries(laneMap).sort((a,b)=>b[1].seen-a[1].seen).map(([k,x])=>{
         const sr=x.seen?Math.round(x.booked/x.seen*100):0;
         return `<tr>
@@ -273,7 +294,7 @@ async function load(){
       if(e.total_ms!=null){x.total+=e.total_ms;x.samples++}
     });
 
-    dailyRows.innerHTML=Object.entries(dayMap).length
+    el.dailyRows.innerHTML=Object.entries(dayMap).length
       ? Object.entries(dayMap).slice(0,14).map(([k,x])=>{
         const n=x.booked+x.failed;
         const sr=n?Math.round(x.booked/n*100):0;
@@ -289,7 +310,7 @@ async function load(){
       if(e.created_at) hours[new Date(e.created_at).getHours()]++;
     });
     const max=Math.max(...hours,1);
-    hourBars.innerHTML=hours.map((v,h)=>`
+    el.hourBars.innerHTML=hours.map((v,h)=>`
       <div class="bar-row">
         <div>${String(h).padStart(2,"0")}:00</div>
         <div class="bar"><span style="width:${Math.round(v/max*100)}%"></span></div>
@@ -298,8 +319,9 @@ async function load(){
     `).join("");
 
   }catch(e){
-    status.textContent="ERROR";
-    status.style.color="#ff6262";
+    console.error("Relay dashboard error:", e);
+    el.status.textContent="ERROR";
+    el.status.style.color="#ff6262";
   }
 }
 load();
