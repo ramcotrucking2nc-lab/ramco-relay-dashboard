@@ -5,54 +5,154 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RAMCO Relay Watcher</title>
 <style>
-body{margin:0;background:#070707;color:#f5f5f5;font-family:Arial,sans-serif}
-.wrap{max-width:1000px;margin:auto;padding:18px}
-.top{display:flex;justify-content:space-between;align-items:center}
-h1{font-size:20px;margin:0}
-.red{color:#ff3b3b;font-weight:bold}
-.status{background:#151515;padding:10px 14px;border-radius:20px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
-.card{background:#151515;border:1px solid #292929;border-radius:14px;padding:15px}
-.label{color:#888;font-size:11px;text-transform:uppercase}
-.value{font-size:26px;font-weight:bold;margin-top:7px}
-h2{font-size:13px;margin-top:20px;color:#bbb}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{padding:10px;text-align:left;border-bottom:1px solid #222}
-.ok{color:#32d583;font-weight:bold}
-.bad{color:#ff6262;font-weight:bold}
-@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+:root{
+  --bg:#050505;
+  --panel:#111;
+  --panel2:#181818;
+  --line:#262626;
+  --text:#f4f4f4;
+  --muted:#8d8d8d;
+  --red:#ff3b3b;
+  --green:#22c55e;
+  --amber:#f59e0b;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#050505,#0b0b0b 45%,#050505);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+}
+.wrap{max-width:1180px;margin:auto;padding:16px}
+.header{
+  display:flex;justify-content:space-between;gap:16px;align-items:center;
+  padding:16px 0 10px
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:50px;height:50px;border-radius:14px;
+  background:linear-gradient(135deg,#ff3b3b,#8b0000);
+  display:grid;place-items:center;font-weight:900;font-size:22px;
+  box-shadow:0 0 30px rgba(255,59,59,.22)
+}
+.brand h1{margin:0;font-size:18px}
+.sub{color:var(--red);font-weight:800;font-size:12px;letter-spacing:.12em}
+.status{
+  border:1px solid var(--line);background:var(--panel);
+  border-radius:999px;padding:10px 14px;font-weight:800;font-size:12px
+}
+.section-title{font-size:12px;color:#bdbdbd;margin:22px 0 10px;letter-spacing:.08em}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--line);
+  border-radius:16px;padding:14px;
+}
+.label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.value{font-size:25px;font-weight:900;margin-top:7px}
+.small{font-size:12px;color:#aaa;margin-top:6px}
+.full{grid-column:1/-1}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #232323;white-space:nowrap}
+th{color:#8f8f8f;font-size:10px;text-transform:uppercase}
+.ok{color:var(--green);font-weight:800}
+.bad{color:#ff6262;font-weight:800}
+.warn{color:var(--amber);font-weight:800}
+.bar-row{display:grid;grid-template-columns:95px 1fr 50px;gap:8px;align-items:center;margin:8px 0}
+.bar{height:9px;background:#252525;border-radius:999px;overflow:hidden}
+.bar>span{display:block;height:100%;background:linear-gradient(90deg,#7f1d1d,#ff3b3b)}
+.muted{color:var(--muted)}
+@media(min-width:760px){
+  .grid{grid-template-columns:repeat(4,1fr)}
+  .logo{width:58px;height:58px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<div class="top">
-<div>
-<h1>RAMCO TRUCKING INC.</h1>
-<div class="red">RELAY WATCHER</div>
-</div>
-<div class="status" id="status">OFFLINE</div>
+<div class="header">
+  <div class="brand">
+    <div class="logo">R</div>
+    <div>
+      <h1>RAMCO TRUCKING INC.</h1>
+      <div class="sub">RELAY WATCHER</div>
+    </div>
+  </div>
+  <div class="status" id="status">OFFLINE</div>
 </div>
 
+<div class="section-title">TODAY</div>
 <div class="grid">
-<div class="card"><div class="label">Booked</div><div class="value" id="booked">0</div></div>
-<div class="card"><div class="label">Failed</div><div class="value" id="failed">0</div></div>
-<div class="card"><div class="label">Success Rate</div><div class="value" id="rate">0%</div></div>
-<div class="card"><div class="label">Uptime</div><div class="value" id="uptime">—</div></div>
+  <div class="card"><div class="label">Booked Loads</div><div class="value" id="booked">0</div></div>
+  <div class="card"><div class="label">Missed / Failed</div><div class="value" id="failed">0</div></div>
+  <div class="card"><div class="label">Success Rate</div><div class="value" id="rate">0%</div></div>
+  <div class="card"><div class="label">Gross Booked</div><div class="value" id="gross">$0</div></div>
 </div>
 
-<h2>BOOKING SPEED</h2>
-
+<div class="section-title">SPEED</div>
 <div class="grid">
-<div class="card"><div class="label">Card → Book</div><div class="value" id="ctb">—</div></div>
-<div class="card"><div class="label">Book → Confirm</div><div class="value" id="btc">—</div></div>
-<div class="card"><div class="label">Average Total</div><div class="value" id="avg">—</div></div>
-<div class="card"><div class="label">Fastest</div><div class="value" id="fast">—</div></div>
+  <div class="card"><div class="label">Card → Book</div><div class="value" id="ctb">—</div></div>
+  <div class="card"><div class="label">Book → Confirm</div><div class="value" id="btc">—</div></div>
+  <div class="card"><div class="label">Avg Total</div><div class="value" id="avg">—</div></div>
+  <div class="card"><div class="label">Fastest</div><div class="value" id="fast">—</div></div>
 </div>
 
-<h2>RECENT ACTIVITY</h2>
+<div class="section-title">DEVICE HEALTH</div>
+<div class="grid">
+  <div class="card"><div class="label">Device</div><div class="value" id="device">—</div></div>
+  <div class="card"><div class="label">Refresh</div><div class="value" id="refresh">—</div></div>
+  <div class="card"><div class="label">Uptime</div><div class="value" id="uptime">—</div></div>
+  <div class="card"><div class="label">Last Heartbeat</div><div class="value" id="heartbeat">—</div></div>
+</div>
 
-<div class="card" style="overflow:auto">
+<div class="section-title">LOAD DROP TREND BY HOUR</div>
+<div class="card full" id="hourBars">
+  <div class="muted">Waiting for telemetry...</div>
+</div>
+
+<div class="section-title">LANE PERFORMANCE</div>
+<div class="card full table-wrap">
+<table>
+<thead>
+<tr>
+<th>Lane</th>
+<th>Seen</th>
+<th>Booked</th>
+<th>Failed</th>
+<th>Success %</th>
+<th>Gross</th>
+<th>Avg Total</th>
+</tr>
+</thead>
+<tbody id="laneRows">
+<tr><td colspan="7">No lane history yet.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section-title">DAILY HISTORY</div>
+<div class="card full table-wrap">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Booked</th>
+<th>Failed</th>
+<th>Success %</th>
+<th>Gross</th>
+<th>Avg Total</th>
+</tr>
+</thead>
+<tbody id="dailyRows">
+<tr><td colspan="6">No daily history yet.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section-title">RECENT ACTIVITY</div>
+<div class="card full table-wrap">
 <table>
 <thead>
 <tr>
@@ -61,10 +161,11 @@ th,td{padding:10px;text-align:left;border-bottom:1px solid #222}
 <th>Lane</th>
 <th>Miles</th>
 <th>Total</th>
+<th>Reason</th>
 </tr>
 </thead>
 <tbody id="rows">
-<tr><td colspan="5">No telemetry yet.</td></tr>
+<tr><td colspan="6">No telemetry yet.</td></tr>
 </tbody>
 </table>
 </div>
@@ -75,60 +176,132 @@ th,td{padding:10px;text-align:left;border-bottom:1px solid #222}
 const API="https://djfydnjmhinijgbwzypw.supabase.co/functions/v1/relay-data-4f10e7c3b2a9";
 
 function ms(v){
- if(v==null)return "—";
- return v<1000?v+" ms":(v/1000).toFixed(2)+" s";
+  if(v==null)return "—";
+  return v<1000 ? `${Math.round(v)} ms` : `${(v/1000).toFixed(2)} s`;
 }
+function money(v){
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(v||0);
+}
+function uptimeFmt(v){
+  if(v==null)return "—";
+  const s=Math.floor(v/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  return h?`${h}h ${m}m`:`${m}m`;
+}
+function lane(e){return `${e.origin||"—"} → ${e.destination||"—"}`}
 
-function uptime(v){
- if(v==null)return "—";
- const s=Math.floor(v/1000);
- const h=Math.floor(s/3600);
- const m=Math.floor((s%3600)/60);
- return h?h+"h "+m+"m":m+"m";
+function estimateRate(e){
+  if(e.meta && typeof e.meta.rate==="number") return e.meta.rate;
+  return 0;
 }
 
 async function load(){
- try{
-  const r=await fetch(API+"?t="+Date.now());
-  const d=await r.json();
-  const s=d.stats;
+  try{
+    const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
+    const d=await r.json();
+    const s=d.stats||{};
+    const events=Array.isArray(d.events)?d.events:[];
 
-  status.textContent=s.online?"RUNNING":"OFFLINE";
-  status.style.color=s.online?"#32d583":"#ff6262";
+    status.textContent=s.online?"RUNNING":"OFFLINE";
+    status.style.color=s.online?"#22c55e":"#ff6262";
 
-  booked.textContent=s.booked;
-  failed.textContent=s.failed;
-  rate.textContent=s.success_rate+"%";
-  uptime.textContent=window.uptime(s.uptime_ms);
+    booked.textContent=s.booked??0;
+    failed.textContent=s.failed??0;
+    rate.textContent=(s.success_rate??0)+"%";
+    ctb.textContent=ms(s.avg_card_to_book_ms);
+    btc.textContent=ms(s.avg_book_to_confirm_ms);
+    avg.textContent=ms(s.avg_total_ms);
+    fast.textContent=ms(s.fastest_total_ms);
+    device.textContent=s.device_id||"—";
+    refresh.textContent=s.refresh_rate!=null?s.refresh_rate+" / sec":"—";
+    uptime.textContent=uptimeFmt(s.uptime_ms);
 
-  ctb.textContent=ms(s.avg_card_to_book_ms);
-  btc.textContent=ms(s.avg_book_to_confirm_ms);
-  avg.textContent=ms(s.avg_total_ms);
-  fast.textContent=ms(s.fastest_total_ms);
+    const latest=events[0];
+    heartbeat.textContent=latest?new Date(latest.created_at).toLocaleTimeString():"—";
 
-  const events=d.events.filter(x =>
-    x.event_type==="booking_success" ||
-    x.event_type==="booking_failed"
-  ).slice(0,50);
+    const bookingEvents=events.filter(e =>
+      e.event_type==="booking_success" ||
+      e.event_type==="booking_failed"
+    );
 
-  rows.innerHTML=events.length ? events.map(x=>{
-   const good=x.event_type==="booking_success";
-   return `<tr>
-   <td>${new Date(x.created_at).toLocaleTimeString()}</td>
-   <td class="${good?"ok":"bad"}">${good?"BOOKED":"FAILED"}</td>
-   <td>${x.origin||"—"} → ${x.destination||"—"}</td>
-   <td>${x.miles??"—"}</td>
-   <td>${ms(x.total_ms)}</td>
-   </tr>`;
-  }).join("") :
-  '<tr><td colspan="5">No telemetry yet.</td></tr>';
+    const todayKey=new Date().toLocaleDateString();
+    const today=bookingEvents.filter(e=>new Date(e.created_at).toLocaleDateString()===todayKey);
+    gross.textContent=money(today.filter(e=>e.event_type==="booking_success")
+      .reduce((a,e)=>a+estimateRate(e),0));
 
- }catch(e){
-  status.textContent="ERROR";
-  status.style.color="#ff6262";
- }
+    rows.innerHTML=bookingEvents.length?bookingEvents.slice(0,50).map(e=>{
+      const good=e.event_type==="booking_success";
+      return `<tr>
+        <td>${new Date(e.created_at).toLocaleString()}</td>
+        <td class="${good?"ok":"bad"}">${good?"BOOKED":"FAILED"}</td>
+        <td>${lane(e)}</td>
+        <td>${e.miles??"—"}</td>
+        <td>${ms(e.total_ms)}</td>
+        <td>${e.failure_reason||"—"}</td>
+      </tr>`;
+    }).join(""):'<tr><td colspan="6">No telemetry yet.</td></tr>';
+
+    const laneMap={};
+    bookingEvents.forEach(e=>{
+      const k=lane(e);
+      laneMap[k]??={seen:0,booked:0,failed:0,gross:0,total:0,samples:0};
+      const x=laneMap[k];
+      x.seen++;
+      if(e.event_type==="booking_success"){
+        x.booked++;
+        x.gross+=estimateRate(e);
+      }else x.failed++;
+      if(e.total_ms!=null){x.total+=e.total_ms;x.samples++}
+    });
+
+    laneRows.innerHTML=Object.entries(laneMap).length
+      ? Object.entries(laneMap).sort((a,b)=>b[1].seen-a[1].seen).map(([k,x])=>{
+        const sr=x.seen?Math.round(x.booked/x.seen*100):0;
+        return `<tr>
+          <td>${k}</td><td>${x.seen}</td><td>${x.booked}</td><td>${x.failed}</td>
+          <td>${sr}%</td><td>${money(x.gross)}</td>
+          <td>${ms(x.samples?x.total/x.samples:null)}</td>
+        </tr>`;
+      }).join("")
+      : '<tr><td colspan="7">No lane history yet.</td></tr>';
+
+    const dayMap={};
+    bookingEvents.forEach(e=>{
+      const k=new Date(e.created_at).toLocaleDateString();
+      dayMap[k]??={booked:0,failed:0,gross:0,total:0,samples:0};
+      const x=dayMap[k];
+      if(e.event_type==="booking_success"){x.booked++;x.gross+=estimateRate(e)} else x.failed++;
+      if(e.total_ms!=null){x.total+=e.total_ms;x.samples++}
+    });
+
+    dailyRows.innerHTML=Object.entries(dayMap).length
+      ? Object.entries(dayMap).slice(0,14).map(([k,x])=>{
+        const n=x.booked+x.failed;
+        const sr=n?Math.round(x.booked/n*100):0;
+        return `<tr>
+          <td>${k}</td><td>${x.booked}</td><td>${x.failed}</td><td>${sr}%</td>
+          <td>${money(x.gross)}</td><td>${ms(x.samples?x.total/x.samples:null)}</td>
+        </tr>`;
+      }).join("")
+      : '<tr><td colspan="6">No daily history yet.</td></tr>';
+
+    const hours=Array(24).fill(0);
+    events.forEach(e=>{
+      if(e.created_at) hours[new Date(e.created_at).getHours()]++;
+    });
+    const max=Math.max(...hours,1);
+    hourBars.innerHTML=hours.map((v,h)=>`
+      <div class="bar-row">
+        <div>${String(h).padStart(2,"0")}:00</div>
+        <div class="bar"><span style="width:${Math.round(v/max*100)}%"></span></div>
+        <div>${v}</div>
+      </div>
+    `).join("");
+
+  }catch(e){
+    status.textContent="ERROR";
+    status.style.color="#ff6262";
+  }
 }
-
 load();
 setInterval(load,10000);
 </script>
